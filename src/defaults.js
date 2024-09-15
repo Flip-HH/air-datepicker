@@ -64,8 +64,11 @@ export default {
     maxHours: 24,
     minMinutes: 0,
     maxMinutes: 59,
+    minSeconds: 0,
+    maxSeconds: 59,
     hoursStep: 1,
     minutesStep: 1,
+    secondsStep: 1,
 
     onSelect: false,
     onChangeViewDate: false,
