@@ -79,8 +79,8 @@ export default class DatepickerTime {
 
     buildHtml() {
         let {
-            ampm, hours, displayHours, minutes, minHours, minMinutes, maxHours, maxMinutes, dayPeriod,
-            opts: {hoursStep, minutesStep}
+            ampm, hours, displayHours, minutes, seconds, minHours, minMinutes, minSeconds, maxHours, maxMinutes, maxSeconds, dayPeriod,
+            opts: {hoursStep, minutesStep, secondsStep}
         } = this;
 
         this.$el.innerHTML = '' +
@@ -88,6 +88,8 @@ export default class DatepickerTime {
             `   <span class="air-datepicker-time--current-hours">${getLeadingZeroNum(displayHours)}</span>` +
             '   <span class="air-datepicker-time--current-colon">:</span>' +
             `   <span class="air-datepicker-time--current-minutes">${getLeadingZeroNum(minutes)}</span>` +
+            '   <span class="air-datepicker-time--current-colon">:</span>' +
+            `   <span class="air-datepicker-time--current-seconds">${getLeadingZeroNum(seconds)}</span>` +
             `   ${ampm ? `<span class='air-datepicker-time--current-ampm'>${dayPeriod}</span>` : ''}` +
             '</div>' +
             '<div class="air-datepicker-time--sliders">' +
@@ -99,6 +101,10 @@ export default class DatepickerTime {
             // eslint-disable-next-line max-len
             `      <input type="range" name="minutes" value="${minutes}" min="${minMinutes}" max="${maxMinutes}" step="${minutesStep}"/>` +
             '   </div>' +
+            '   <div class="air-datepicker-time--row">' +
+            // eslint-disable-next-line max-len
+            `      <input type="range" name="seconds" value="${seconds}" min="${minSeconds}" max="${maxSeconds}" step="${secondsStep}"/>` +
+            '   </div>' +
             '</div>';
     }
 
@@ -108,8 +114,10 @@ export default class DatepickerTime {
         this.$ranges = this.$el.querySelectorAll('[type="range"]');
         this.$hours = getElWithContext('[name="hours"]');
         this.$minutes = getElWithContext('[name="minutes"]');
+        this.$seconds = getElWithContext('[name="seconds"]');
         this.$hoursText = getElWithContext('.air-datepicker-time--current-hours');
         this.$minutesText = getElWithContext('.air-datepicker-time--current-minutes');
+        this.$secondsText = getElWithContext('.air-datepicker-time--current-seconds');
         this.$ampm = getElWithContext('.air-datepicker-time--current-ampm');
     }
 
@@ -123,6 +131,7 @@ export default class DatepickerTime {
         if (!date) return;
         date.setHours(this.hours);
         date.setMinutes(this.minutes);
+        date.setSeconds(this.seconds);
     }
 
     setMinMaxTime(date) {
@@ -140,21 +149,25 @@ export default class DatepickerTime {
     }
 
     setCurrentTime(date) {
-        let {hours, minutes} = date ? getParsedDate(date) : this;
+        let {hours, minutes, seconds} = date ? getParsedDate(date) : this;
 
         this.hours = clamp(hours, this.minHours, this.maxHours);
         this.minutes = clamp(minutes, this.minMinutes, this.maxMinutes);
+        this.seconds = clamp(minutes, this.minSeconds, this.maxSeconds);
     }
 
     setMinMaxTimeFromOptions() {
         let maxHoursPossible = 23,
             maxMinutesPossible = 59,
-            {minHours, minMinutes, maxHours, maxMinutes} = this.opts;
+            maxSecondsPossible = 59,
+            {minHours, minMinutes, minSeconds, maxHours, maxMinutes, maxSeconds} = this.opts;
 
         this.minHours = clamp(minHours, 0, maxHoursPossible);
         this.minMinutes = clamp(minMinutes, 0, maxMinutesPossible);
+        this.minSeconds = clamp(minMinutes, 0, maxSecondsPossible);
         this.maxHours = clamp(maxHours, 0, maxHoursPossible);
         this.maxMinutes = clamp(maxMinutes, 0, maxMinutesPossible);
+        this.maxSeconds = clamp(maxSeconds, 0, maxSecondsPossible);
     }
 
     setMinTimeFromMinDate(date) {
@@ -166,6 +179,12 @@ export default class DatepickerTime {
             this.minMinutes = this.opts.minMinutes;
         } else {
             this.minMinutes = date.getMinutes();
+        }
+        
+        if (lastSelectedDate && lastSelectedDate.getMinutes() > date.getMinutes()) {
+            this.minSeconds = this.opts.minSeconds;
+        } else {
+            this.minSeconds = date.getSeconds();
         }
     }
 
@@ -179,6 +198,12 @@ export default class DatepickerTime {
         } else {
             this.maxMinutes = date.getMinutes();
         }
+
+        if (lastSelectedDate && lastSelectedDate.getMinutes() ' date.getMinutes()) {
+            this.maxSeconds = this.opts.maxSeconds;
+        } else {
+            this.maxSeconds = date.getSeconds();
+        }
     }
 
     updateSliders() {
@@ -191,11 +216,17 @@ export default class DatepickerTime {
             min: this.minMinutes,
             max: this.maxMinutes
         }).value = this.minutes;
+
+        setAttribute(this.$seconds, {
+            min: this.minSeconds,
+            max: this.maxSeconds
+        }).value = this.seconds;
     }
 
     updateText() {
         this.$hoursText.innerHTML = getLeadingZeroNum(this.displayHours);
         this.$minutesText.innerHTML =  getLeadingZeroNum(this.minutes);
+        this.$secondsText.innerHTML =  getLeadingZeroNum(this.seconds);
 
         if (this.ampm) {
             this.$ampm.innerHTML = this.dayPeriod;
@@ -232,13 +263,15 @@ export default class DatepickerTime {
 
         this.dp.trigger(consts.eventChangeTime, {
             hours: this.hours,
-            minutes: this.minutes
+            minutes: this.minutes,
+            seconds: this.seconds,
         });
     }
 
     onMouseEnterLeave = (e) => {
         let name = e.target.getAttribute('name'),
             $el = this.$minutesText;
+            $el = this.$secondsText;
 
         if (name === 'hours') {
             $el = this.$hoursText;
@@ -266,6 +299,10 @@ export default class DatepickerTime {
 
     get hours() {
         return this._hours;
+    }
+
+    get minutes() {
+        return this._minutes;
     }
 
     render() {
